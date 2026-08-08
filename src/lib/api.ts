@@ -7,6 +7,7 @@ interface StoreData {
   affiliations: any[];
   relationships: any[];
   groups: any[];
+  dialogues: any[]; // 코멘트(대화) 저장 배열 추가
   settings: { title: string };
 }
 
@@ -20,19 +21,21 @@ const getStore = (): StoreData => {
       affiliations: [],
       relationships: [],
       groups: [],
+      dialogues: [],
       settings: { title: '이야기 결' }
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
     return initial;
   }
-  return JSON.parse(data);
+  const parsed = JSON.parse(data);
+  if (!parsed.dialogues) parsed.dialogues = [];
+  return parsed;
 };
 
 const saveStore = (data: StoreData) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 };
 
-// fetch API 응답 객체(Response) 모방 함수
 const makeResponse = (data: any, status = 200) => {
   return {
     ok: status >= 200 && status < 300,
@@ -112,7 +115,40 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 4. Backgrounds & Affiliations & Relationships
+  // 4. Dialogues (사건 코멘트 기능 추가)
+  if (cleanPath.startsWith('events/') && cleanPath.endsWith('/dialogues')) {
+    const parts = cleanPath.split('/');
+    const eventId = Number(parts[1]);
+
+    if (method === 'GET') {
+      const filtered = store.dialogues.filter((d) => d.event_id === eventId);
+      return makeResponse(filtered);
+    }
+    if (method === 'POST') {
+      const newDialogue = {
+        id: Date.now(),
+        event_id: eventId,
+        character_id: body.character_id,
+        message: body.message,
+        created_at: new Date().toISOString()
+      };
+      store.dialogues.push(newDialogue);
+      saveStore(store);
+      return makeResponse(newDialogue);
+    }
+  }
+
+  if (cleanPath.startsWith('dialogues/')) {
+    const parts = cleanPath.split('/');
+    const id = Number(parts[1]);
+    if (method === 'DELETE') {
+      store.dialogues = store.dialogues.filter((d) => d.id !== id);
+      saveStore(store);
+      return makeResponse({ ok: true });
+    }
+  }
+
+  // 5. Backgrounds & Affiliations & Relationships
   if (cleanPath === 'backgrounds') {
     if (method === 'GET') return makeResponse(store.backgrounds);
     if (method === 'POST') {
