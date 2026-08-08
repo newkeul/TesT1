@@ -2,7 +2,8 @@ import os
 import sqlite3
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-DB_PATH = '/workspace/data/app.db'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "..", "data", "app.db")
 def get_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
