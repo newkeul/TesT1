@@ -55,7 +55,23 @@ export const api = async (path: string, init?: RequestInit) => {
   const body = init?.body ? JSON.parse(init.body as string) : null;
   const cleanPath = path.replace(/^\/+/, '').replace(/\/+$/, '');
 
-  // 1. Story Settings
+  // 1. Story Reset (초기화 기능)
+  if (cleanPath === 'story-reset' && method === 'POST') {
+    const emptyStore: StoreData = {
+      characters: [],
+      events: [],
+      backgrounds: [],
+      affiliations: [],
+      relationships: [],
+      groups: [],
+      dialogues: [],
+      settings: { title: '이야기 결' }
+    };
+    saveStore(emptyStore);
+    return makeResponse({ ok: true });
+  }
+
+  // 2. Story Settings
   if (cleanPath === 'story-settings') {
     if (method === 'GET') return makeResponse({ title: store.settings.title });
     if (method === 'PUT') {
@@ -65,7 +81,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 2. Characters (인물)
+  // 3. Characters (인물)
   if (cleanPath === 'characters') {
     if (method === 'GET') return makeResponse(store.characters);
     if (method === 'POST') {
@@ -85,7 +101,7 @@ export const api = async (path: string, init?: RequestInit) => {
   if (cleanPath.startsWith('characters/')) {
     const id = Number(cleanPath.split('/')[1]);
     if (method === 'PUT') {
-      const index = store.characters.findIndex((c) => c.id === id);
+      const index = store.characters.findIndex((c) => Number(c.id) === id);
       if (index !== -1) {
         store.characters[index] = { ...store.characters[index], ...body };
         saveStore(store);
@@ -93,13 +109,13 @@ export const api = async (path: string, init?: RequestInit) => {
       }
     }
     if (method === 'DELETE') {
-      store.characters = store.characters.filter((c) => c.id !== id);
+      store.characters = store.characters.filter((c) => Number(c.id) !== id);
       saveStore(store);
       return makeResponse({ ok: true });
     }
   }
 
-  // 3. Events (사건)
+  // 4. Events (사건)
   if (cleanPath === 'events') {
     if (method === 'GET') return makeResponse(store.events);
     if (method === 'POST') {
@@ -121,7 +137,7 @@ export const api = async (path: string, init?: RequestInit) => {
   if (cleanPath.startsWith('events/') && !cleanPath.endsWith('/dialogues')) {
     const id = Number(cleanPath.split('/')[1]);
     if (method === 'PUT') {
-      const index = store.events.findIndex((e) => e.id === id);
+      const index = store.events.findIndex((e) => Number(e.id) === id);
       if (index !== -1) {
         store.events[index] = { ...store.events[index], ...body };
         saveStore(store);
@@ -136,7 +152,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 4. Dialogues (코멘트)
+  // 5. Dialogues (코멘트)
   if (cleanPath.startsWith('events/') && cleanPath.endsWith('/dialogues')) {
     const eventId = Number(cleanPath.split('/')[1]);
     if (method === 'GET') {
@@ -166,7 +182,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 5. Backgrounds (배경)
+  // 6. Backgrounds (배경)
   if (cleanPath === 'backgrounds') {
     if (method === 'GET') return makeResponse(store.backgrounds);
     if (method === 'POST') {
@@ -180,7 +196,7 @@ export const api = async (path: string, init?: RequestInit) => {
   if (cleanPath.startsWith('backgrounds/')) {
     const id = Number(cleanPath.split('/')[1]);
     if (method === 'PUT') {
-      const index = store.backgrounds.findIndex((b) => b.id === id);
+      const index = store.backgrounds.findIndex((b) => Number(b.id) === id);
       if (index !== -1) {
         store.backgrounds[index] = { ...store.backgrounds[index], ...body };
         saveStore(store);
@@ -194,7 +210,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 6. Affiliations (소속)
+  // 7. Affiliations (소속)
   if (cleanPath === 'affiliations') {
     if (method === 'GET') return makeResponse(store.affiliations);
     if (method === 'POST') {
@@ -214,7 +230,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 7. Relationships (개인 관계)
+  // 8. Relationships (개인 관계)
   if (cleanPath === 'relationships') {
     if (method === 'GET') return makeResponse(store.relationships);
     if (method === 'POST') {
@@ -234,7 +250,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 8. Relationship Groups (관계 그룹)
+  // 9. Relationship Groups (관계 그룹)
   if (cleanPath === 'relationship-groups') {
     if (method === 'GET') return makeResponse(store.groups);
     if (method === 'POST') {
@@ -253,6 +269,9 @@ export const api = async (path: string, init?: RequestInit) => {
       return makeResponse({ ok: true });
     }
   }
+
+  return makeResponse({ ok: true });
+};
 
   return makeResponse({ ok: true });
 };
