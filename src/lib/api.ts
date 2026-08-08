@@ -32,6 +32,16 @@ const saveStore = (data: StoreData) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 };
 
+// fetch API 응답 객체(Response) 모방 함수
+const makeResponse = (data: any, status = 200) => {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => data,
+    text: async () => JSON.stringify(data),
+  };
+};
+
 export const api = async (path: string, init?: RequestInit) => {
   const store = getStore();
   const method = init?.method || 'GET';
@@ -40,17 +50,17 @@ export const api = async (path: string, init?: RequestInit) => {
 
   // 1. Story Settings
   if (cleanPath === 'story-settings') {
-    if (method === 'GET') return { title: store.settings.title };
+    if (method === 'GET') return makeResponse({ title: store.settings.title });
     if (method === 'PUT') {
       store.settings.title = body.title;
       saveStore(store);
-      return store.settings;
+      return makeResponse(store.settings);
     }
   }
 
   // 2. Characters
   if (cleanPath === 'characters') {
-    if (method === 'GET') return store.characters;
+    if (method === 'GET') return makeResponse(store.characters);
     if (method === 'POST') {
       const newChar = {
         id: Date.now(),
@@ -61,7 +71,7 @@ export const api = async (path: string, init?: RequestInit) => {
       };
       store.characters.push(newChar);
       saveStore(store);
-      return newChar;
+      return makeResponse(newChar);
     }
   }
 
@@ -73,19 +83,19 @@ export const api = async (path: string, init?: RequestInit) => {
       if (index !== -1) {
         store.characters[index] = { ...store.characters[index], ...body };
         saveStore(store);
-        return store.characters[index];
+        return makeResponse(store.characters[index]);
       }
     }
     if (method === 'DELETE') {
       store.characters = store.characters.filter((c) => c.id !== id);
       saveStore(store);
-      return { ok: true };
+      return makeResponse({ ok: true });
     }
   }
 
   // 3. Events
   if (cleanPath === 'events') {
-    if (method === 'GET') return store.events;
+    if (method === 'GET') return makeResponse(store.events);
     if (method === 'POST') {
       const newEvent = {
         id: Date.now(),
@@ -98,50 +108,50 @@ export const api = async (path: string, init?: RequestInit) => {
       };
       store.events.push(newEvent);
       saveStore(store);
-      return newEvent;
+      return makeResponse(newEvent);
     }
   }
 
   // 4. Backgrounds & Affiliations & Relationships
   if (cleanPath === 'backgrounds') {
-    if (method === 'GET') return store.backgrounds;
+    if (method === 'GET') return makeResponse(store.backgrounds);
     if (method === 'POST') {
       const item = { id: Date.now(), ...body };
       store.backgrounds.push(item);
       saveStore(store);
-      return item;
+      return makeResponse(item);
     }
   }
 
   if (cleanPath === 'affiliations') {
-    if (method === 'GET') return store.affiliations;
+    if (method === 'GET') return makeResponse(store.affiliations);
     if (method === 'POST') {
       const item = { id: Date.now(), ...body };
       store.affiliations.push(item);
       saveStore(store);
-      return item;
+      return makeResponse(item);
     }
   }
 
   if (cleanPath === 'relationships') {
-    if (method === 'GET') return store.relationships;
+    if (method === 'GET') return makeResponse(store.relationships);
     if (method === 'POST') {
       const item = { id: Date.now(), ...body };
       store.relationships.push(item);
       saveStore(store);
-      return item;
+      return makeResponse(item);
     }
   }
 
   if (cleanPath === 'relationship-groups') {
-    if (method === 'GET') return store.groups;
+    if (method === 'GET') return makeResponse(store.groups);
     if (method === 'POST') {
       const item = { id: Date.now(), ...body };
       store.groups.push(item);
       saveStore(store);
-      return item;
+      return makeResponse(item);
     }
   }
 
-  return { ok: true };
+  return makeResponse([]);
 };
