@@ -272,6 +272,3 @@ export const api = async (path: string, init?: RequestInit) => {
 
   return makeResponse({ ok: true });
 };
-
-  return makeResponse({ ok: true });
-};
