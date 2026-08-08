@@ -51,15 +51,15 @@ const makeResponse = (data: any, status = 200) => {
 
 export const api = async (path: string, init?: RequestInit) => {
   const store = getStore();
-  const method = init?.method || 'GET';
+  const method = (init?.method || 'GET').toUpperCase();
   const body = init?.body ? JSON.parse(init.body as string) : null;
-  const cleanPath = path.replace(/^\/+/, '');
+  const cleanPath = path.replace(/^\/+/, '').replace(/\/+$/, '');
 
   // 1. Story Settings
   if (cleanPath === 'story-settings') {
     if (method === 'GET') return makeResponse({ title: store.settings.title });
     if (method === 'PUT') {
-      store.settings.title = body.title;
+      store.settings.title = body?.title || store.settings.title;
       saveStore(store);
       return makeResponse(store.settings);
     }
@@ -129,8 +129,8 @@ export const api = async (path: string, init?: RequestInit) => {
       }
     }
     if (method === 'DELETE') {
-      store.events = store.events.filter((e) => e.id !== id);
-      store.dialogues = store.dialogues.filter((d) => d.event_id !== id);
+      store.events = store.events.filter((e) => Number(e.id) !== id);
+      store.dialogues = store.dialogues.filter((d) => Number(d.event_id) !== id);
       saveStore(store);
       return makeResponse({ ok: true });
     }
@@ -140,7 +140,7 @@ export const api = async (path: string, init?: RequestInit) => {
   if (cleanPath.startsWith('events/') && cleanPath.endsWith('/dialogues')) {
     const eventId = Number(cleanPath.split('/')[1]);
     if (method === 'GET') {
-      const filtered = store.dialogues.filter((d) => d.event_id === eventId);
+      const filtered = store.dialogues.filter((d) => Number(d.event_id) === eventId);
       return makeResponse(filtered);
     }
     if (method === 'POST') {
@@ -160,7 +160,7 @@ export const api = async (path: string, init?: RequestInit) => {
   if (cleanPath.startsWith('dialogues/')) {
     const id = Number(cleanPath.split('/')[1]);
     if (method === 'DELETE') {
-      store.dialogues = store.dialogues.filter((d) => d.id !== id);
+      store.dialogues = store.dialogues.filter((d) => Number(d.id) !== id);
       saveStore(store);
       return makeResponse({ ok: true });
     }
@@ -188,7 +188,7 @@ export const api = async (path: string, init?: RequestInit) => {
       }
     }
     if (method === 'DELETE') {
-      store.backgrounds = store.backgrounds.filter((b) => b.id !== id);
+      store.backgrounds = store.backgrounds.filter((b) => Number(b.id) !== id);
       saveStore(store);
       return makeResponse({ ok: true });
     }
@@ -208,7 +208,7 @@ export const api = async (path: string, init?: RequestInit) => {
   if (cleanPath.startsWith('affiliations/')) {
     const id = Number(cleanPath.split('/')[1]);
     if (method === 'DELETE') {
-      store.affiliations = store.affiliations.filter((a) => a.id !== id);
+      store.affiliations = store.affiliations.filter((a) => Number(a.id) !== id);
       saveStore(store);
       return makeResponse({ ok: true });
     }
@@ -228,7 +228,7 @@ export const api = async (path: string, init?: RequestInit) => {
   if (cleanPath.startsWith('relationships/')) {
     const id = Number(cleanPath.split('/')[1]);
     if (method === 'DELETE') {
-      store.relationships = store.relationships.filter((r) => r.id !== id);
+      store.relationships = store.relationships.filter((r) => Number(r.id) !== id);
       saveStore(store);
       return makeResponse({ ok: true });
     }
@@ -248,11 +248,11 @@ export const api = async (path: string, init?: RequestInit) => {
   if (cleanPath.startsWith('relationship-groups/')) {
     const id = Number(cleanPath.split('/')[1]);
     if (method === 'DELETE') {
-      store.groups = store.groups.filter((g) => g.id !== id);
+      store.groups = store.groups.filter((g) => Number(g.id) !== id);
       saveStore(store);
       return makeResponse({ ok: true });
     }
   }
 
-  return makeResponse([]);
+  return makeResponse({ ok: true });
 };
