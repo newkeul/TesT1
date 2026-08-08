@@ -133,6 +133,13 @@ def init_db():
         if 'relation_type' in group_columns:
             conn.execute("UPDATE relationship_groups SET relation_type = COALESCE(NULLIF(relation_type, ''), name)")
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 init_db()
 class CharacterPayload(BaseModel):
     name: str
