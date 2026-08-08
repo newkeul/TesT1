@@ -11,29 +11,39 @@ interface StoreData {
   settings: { title: string };
 }
 
+const getDefaultStore = (): StoreData => ({
+  characters: [],
+  events: [],
+  backgrounds: [],
+  affiliations: [],
+  relationships: [],
+  groups: [],
+  dialogues: [],
+  settings: { title: '이야기 결' }
+});
+
 const getStore = (): StoreData => {
   const data = localStorage.getItem(STORAGE_KEY);
   if (!data) {
-    const initial: StoreData = {
-      characters: [],
-      events: [],
-      backgrounds: [],
-      affiliations: [],
-      relationships: [],
-      groups: [],
-      dialogues: [],
-      settings: { title: '이야기 결' }
-    };
+    const initial = getDefaultStore();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
     return initial;
   }
-  const parsed = JSON.parse(data);
-  if (!parsed.dialogues) parsed.dialogues = [];
-  if (!parsed.affiliations) parsed.affiliations = [];
-  if (!parsed.backgrounds) parsed.backgrounds = [];
-  if (!parsed.relationships) parsed.relationships = [];
-  if (!parsed.groups) parsed.groups = [];
-  return parsed;
+  try {
+    const parsed = JSON.parse(data);
+    return {
+      characters: Array.isArray(parsed.characters) ? parsed.characters : [],
+      events: Array.isArray(parsed.events) ? parsed.events : [],
+      backgrounds: Array.isArray(parsed.backgrounds) ? parsed.backgrounds : [],
+      affiliations: Array.isArray(parsed.affiliations) ? parsed.affiliations : [],
+      relationships: Array.isArray(parsed.relationships) ? parsed.relationships : [],
+      groups: Array.isArray(parsed.groups) ? parsed.groups : [],
+      dialogues: Array.isArray(parsed.dialogues) ? parsed.dialogues : [],
+      settings: parsed.settings && typeof parsed.settings.title === 'string' ? parsed.settings : { title: '이야기 결' }
+    };
+  } catch (e) {
+    return getDefaultStore();
+  }
 };
 
 const saveStore = (data: StoreData) => {
@@ -55,23 +65,30 @@ export const api = async (path: string, init?: RequestInit) => {
   const body = init?.body ? JSON.parse(init.body as string) : null;
   const cleanPath = path.replace(/^\/+/, '').replace(/\/+$/, '');
 
-  // 1. Story Reset (초기화 기능)
+  // 1. Story Reset (초기화)
   if (cleanPath === 'story-reset' && method === 'POST') {
-    const emptyStore: StoreData = {
-      characters: [],
-      events: [],
-      backgrounds: [],
-      affiliations: [],
-      relationships: [],
-      groups: [],
-      dialogues: [],
-      settings: { title: '이야기 결' }
-    };
+    const emptyStore = getDefaultStore();
     saveStore(emptyStore);
     return makeResponse({ ok: true });
   }
 
-  // 2. Story Settings
+  // 2. Story Import (불러오기)
+  if (cleanPath === 'story-import' && method === 'POST') {
+    const importedStore: StoreData = {
+      characters: body?.characters || [],
+      events: body?.events || [],
+      backgrounds: body?.backgrounds || [],
+      affiliations: body?.affiliations || [],
+      relationships: body?.relationships || [],
+      groups: body?.groups || [],
+      dialogues: body?.dialogues || [],
+      settings: body?.settings || { title: '이야기 결' }
+    };
+    saveStore(importedStore);
+    return makeResponse({ ok: true });
+  }
+
+  // 3. Story Settings
   if (cleanPath === 'story-settings') {
     if (method === 'GET') return makeResponse({ title: store.settings.title });
     if (method === 'PUT') {
@@ -81,7 +98,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 3. Characters (인물)
+  // 4. Characters (인물)
   if (cleanPath === 'characters') {
     if (method === 'GET') return makeResponse(store.characters);
     if (method === 'POST') {
@@ -115,7 +132,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 4. Events (사건)
+  // 5. Events (사건)
   if (cleanPath === 'events') {
     if (method === 'GET') return makeResponse(store.events);
     if (method === 'POST') {
@@ -152,7 +169,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 5. Dialogues (코멘트)
+  // 6. Dialogues (코멘트)
   if (cleanPath.startsWith('events/') && cleanPath.endsWith('/dialogues')) {
     const eventId = Number(cleanPath.split('/')[1]);
     if (method === 'GET') {
@@ -182,7 +199,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 6. Backgrounds (배경)
+  // 7. Backgrounds (배경)
   if (cleanPath === 'backgrounds') {
     if (method === 'GET') return makeResponse(store.backgrounds);
     if (method === 'POST') {
@@ -210,7 +227,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 7. Affiliations (소속)
+  // 8. Affiliations (소속)
   if (cleanPath === 'affiliations') {
     if (method === 'GET') return makeResponse(store.affiliations);
     if (method === 'POST') {
@@ -230,7 +247,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 8. Relationships (개인 관계)
+  // 9. Relationships (개인 관계)
   if (cleanPath === 'relationships') {
     if (method === 'GET') return makeResponse(store.relationships);
     if (method === 'POST') {
@@ -250,7 +267,7 @@ export const api = async (path: string, init?: RequestInit) => {
     }
   }
 
-  // 9. Relationship Groups (관계 그룹)
+  // 10. Relationship Groups (관계 그룹)
   if (cleanPath === 'relationship-groups') {
     if (method === 'GET') return makeResponse(store.groups);
     if (method === 'POST') {
